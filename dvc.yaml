@@ -1,0 +1,85 @@
+stages:
+  prepare:
+    cmd:
+      papermill prepare.ipynb prepare_out.ipynb
+    outs:
+      - iris.csv
+  logistic_regression:
+    cmd: papermill 
+     logic_regr.ipynb 
+     outputs/logic_regr_out.ipynb
+     -p SEED ${common.seed}
+     -p DATA ${common.data}
+     -p TEST_SIZE ${common.test_size} 
+     -p PENALTY ${logistic_regression.penalty}
+     -p C ${logistic_regression.c}
+     -p MULTI_CLASS ${logistic_regression.multi_class}
+    deps:
+      - iris.csv
+    outs:
+      - model_lr.pckl
+      - test_classes_lr.csv
+      - train_classes_lr.csv
+    metrics:
+      - metrics_lr.yaml:
+          cache: false
+    params:
+    - common
+    - logistic_regression
+          
+  random_forest:
+    cmd: papermill
+     iris_randomforest.ipynb 
+     randomforest_out.ipynb
+     -p SEED ${common.seed}
+     -p DATA ${common.data}
+     -p TEST_SIZE ${common.test_size}
+    deps:
+      - iris.csv
+    outs:
+      - model_random_forest.pckl
+      - test_classes_random_forest.csv
+      - train_classes_random_forest.csv
+    metrics:
+      - metrics_random_forest.yaml:
+          cache: false
+  finalyze:
+    cmd: papermill finalyze.ipynb finalyze_out.ipynb
+    deps:
+      - metrics_random_forest.yaml
+      - metrics_lr.yaml
+    outs:
+      - result.csv
+      - Accuracy.csv
+      - Precision.csv
+      - Recall.csv
+      - F1.csv
+      
+plots:
+  - test_classes_random_forest.csv:
+      template: confusion
+      x: actual_class
+      y: predicted_class
+      title: Confusion Matrix Random Forest
+  - test_classes_lr.csv:
+      template: confusion
+      x: actual_class
+      y: predicted_class
+      title: Confusion Matrix LR
+  - Accuracy.csv:
+      template: bar_horizontal
+      x: Accuracy
+      y: Model
+  - Precision.csv:
+      template: bar_horizontal
+      x: Precision
+      y: Model
+  - Recall.csv:
+      template: bar_horizontal
+      x: Recall
+      y: Model
+  - F1.csv:
+      template: bar_horizontal
+      x: F1
+      y: Model
+
